@@ -10,6 +10,11 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+def alen(x):
+    return 1 if np.isscalar(x) else len(x)
+
+
 def precision(tp, fn, fp, tn):
     with np.errstate(divide='ignore', invalid='ignore'):
         return tp/(tp + fp)
@@ -33,7 +38,7 @@ def precision_gain(tp, fn, fp, tn):
     n_neg = fp + tn
     with np.errstate(divide='ignore', invalid='ignore'):
         prec_gain = 1. - (n_pos/n_neg) * (fp/tp)
-    if np.alen(prec_gain) > 1:
+    if alen(prec_gain) > 1:
         prec_gain[tn + fn == 0] = 0
     elif tn + fn == 0:
         prec_gain = 0
@@ -61,7 +66,7 @@ def recall_gain(tp, fn, fp, tn):
     n_neg = fp + tn
     with np.errstate(divide='ignore', invalid='ignore'):
         rg = 1. - (n_pos/n_neg) * (fn/tp)
-    if np.alen(rg) > 1:
+    if alen(rg) > 1:
         rg[tn + fn == 0] = 1
     elif tn + fn == 0:
         rg = 1
@@ -69,7 +74,7 @@ def recall_gain(tp, fn, fp, tn):
 
 
 def create_segments(labels, pos_scores, neg_scores):
-    n = np.alen(labels)
+    n = alen(labels)
     # reorder labels and pos_scores by decreasing pos_scores, using increasing neg_scores in breaking ties
     new_order = np.lexsort((neg_scores, -pos_scores))
     labels = labels[new_order]
@@ -98,7 +103,7 @@ def create_segments(labels, pos_scores, neg_scores):
 
 def get_point(points, index):
     keys = points.keys()
-    point = np.zeros(np.alen(keys))
+    point = np.zeros(alen(keys))
     key_indices = dict()
     for i, key in enumerate(keys):
         point[i] = points[key][index]
@@ -121,7 +126,7 @@ def insert_point(new_point, key_indices, points, precision_gain=0,
 
 def _create_crossing_points(points, n_pos, n_neg):
     n = n_pos+n_neg
-    points['is_crossing'] = np.zeros(np.alen(points['pos_score']))
+    points['is_crossing'] = np.zeros(alen(points['pos_score']))
     # introduce a crossing point at the crossing through the y-axis
     j = np.amin(np.where(points['recall_gain'] >= 0)[0])
     if points['recall_gain'][j] > 0:  # otherwise there is a point on the boundary and no need for a crossing point
@@ -188,9 +193,9 @@ def create_prg_curve(labels, pos_scores, neg_scores=[]):
     http://www.cs.bris.ac.uk/~flach/PRGcurves/.
     """
     create_crossing_points = True # do it always because calc_auprg otherwise gives the wrong result
-    if np.alen(neg_scores) == 0:
+    if alen(neg_scores) == 0:
         neg_scores = -pos_scores
-    n = np.alen(labels)
+    n = alen(labels)
     n_pos = np.sum(labels)
     n_neg = n - n_pos
     # convert negative labels into 0s
